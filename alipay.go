@@ -425,11 +425,11 @@ type DoRequestToJsonResp struct {
 	BizContent string `json:"bizContent"`
 }
 
-func (this *AliPay) DoRequestToJson(method string, param AliPayParam, results DoRequestToJsonResp) (err error) {
+func (this *AliPay) DoRequestToJson(method string, param AliPayParam, results *DoRequestToJsonResp) (err error) {
 	return this.doRequestToJson(method, param, results)
 }
 
-func (this *AliPay) doRequestToJson(method string, param AliPayParam, result DoRequestToJsonResp) (err error) {
+func (this *AliPay) doRequestToJson(method string, param AliPayParam, results *DoRequestToJsonResp) (err error) {
 	var bufByte []byte
 	if param != nil {
 		p, err := this.URLValuesToJson(param)
@@ -476,32 +476,30 @@ func (this *AliPay) doRequestToJson(method string, param AliPayParam, result DoR
 		return err
 	}
 
-	err = json.Unmarshal(data, &result)
+	err = json.Unmarshal(data, &results)
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[alipay][%v]resp body: %v", param.APIName(), string(data))
 
-	//if len(this.AliPayPublicKey) > 0 {
-	//	var dataStr = string(data)
-	//	var content string
-	//	var sign string
-	//	//
-	//	var rootIndex = 0
-	//	var rootNodeName = ""
-	//	content, sign = parserJSONSourceToJson(dataStr, rootNodeName, rootIndex)
-	//
-	//	if sign != "" {
-	//		//content = fmt.Sprintf("{%s}", content)
-	//		log.Printf("签名内容,签名字段[%v][%v]", content, sign)
-	//		if ok, err := verifyData([]byte(content), this.SignType, sign, this.AliPayPublicKey); ok == false {
-	//			log.Printf("签名异常,签名信息[%v]", err)
-	//			//return err
-	//		}
-	//	}
-	//}
+	if len(this.AliPayPublicKey) > 0 {
+		var dataStr = string(data)
+		var content string
+		var sign string
+		//
+		var rootIndex = 0
+		var rootNodeName = ""
+		content, sign = parserJSONSourceToJson(dataStr, rootNodeName, rootIndex)
 
+		if sign != "" {
+			log.Printf("签名内容,签名字段[%v][%v]", content, sign)
+			if ok, err := verifyData([]byte(content), this.SignType, sign, this.AliPayPublicKey); ok == false {
+				log.Printf("签名异常,签名信息[%v]", err)
+				//return err
+			}
+		}
+	}
 	return err
 }
 
@@ -531,13 +529,12 @@ func (this *AliPay) URLValuesToJson(param AliPayParam) (value url.Values, err er
 	} else {
 		hash = crypto.SHA256
 	}
-	log.Printf("%v", string(this.privateKey))
+
 	sign, err := signWithPKCS1v15(p, this.privateKey, hash)
 	if err != nil {
-		log.Printf("=====================+++++++++++++++错误信息[%v]", err)
 		return nil, err
 	}
-	log.Printf("++++++++++++++++++")
+
 	p.Add("sign", sign)
 	return p, nil
 }
