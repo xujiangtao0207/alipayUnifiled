@@ -38,7 +38,6 @@ func New(appId, aliPublicKey, privateKey string, isProduction bool) (client *Ali
 	client.privateKey = encoding.FormatPrivateKey(privateKey)
 	client.AliPayPublicKey = encoding.FormatPublicKey(aliPublicKey)
 
-
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		Dial: func(netw, addr string) (net.Conn, error) {
@@ -77,9 +76,9 @@ func (this *AliPay) URLValues(param AliPayParam) (value url.Values, err error) {
 	var p = url.Values{}
 	p.Add("app_id", this.appId)
 	p.Add("method", param.APIName())
-	p.Add("format", kFormat)
+	//p.Add("format", kFormat)
 	p.Add("charset", kCharset)
-	p.Add("sign_type", this.SignType)
+
 	p.Add("timestamp", time.Now().Format(kTimeFormat))
 	p.Add("version", kVersion)
 
@@ -105,6 +104,7 @@ func (this *AliPay) URLValues(param AliPayParam) (value url.Values, err error) {
 		return nil, err
 	}
 	p.Add("sign", sign)
+	p.Add("sign_type", this.SignType)
 	return p, nil
 }
 
@@ -159,10 +159,10 @@ func (this *AliPay) doRequest(method string, param AliPayParam, results interfac
 		} else {
 			return nil
 		}
-		content =strings.TrimPrefix(content,"\"")
-		content =strings.TrimSuffix(content,"\"")
+		content = strings.TrimPrefix(content, "\"")
+		content = strings.TrimSuffix(content, "\"")
 
-		content =strings.Replace(content,"\\","",-1)
+		content = strings.Replace(content, "\\", "", -1)
 		log.Printf("签名数据[%v][%v]", content, sign)
 
 		if sign != "" {
